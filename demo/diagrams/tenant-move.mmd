@@ -1,0 +1,9 @@
+flowchart LR
+    C["Copy lines to the<br/>dedicated database<br/>(batched INSERTs)"] --> V{"Fingerprints<br/>identical?"}
+    V -->|no| X["Do not switch"]
+    V -->|yes| S["Switch the routing"]
+    S --> W["A full cycle runs<br/>old rows still there"]
+    W --> V2{"Verify again,<br/>routing points at the target?"}
+    V2 -->|yes| D["Delete the old rows"]
+    S -. "roll back: one routing change" .-> C
+    D -. "after this: a copy in the other direction" .-> C

@@ -1,0 +1,23 @@
+# The reviewed cross-tenant exceptions, kept like code. A query may read across tenants only if it is listed here,
+# its SQL hash matches the one that was reviewed, and the database has the same entry (``make sync-exceptions``).
+# To change a query, change the SQL, have it reviewed, and update sql_sha256 and reviewed_on in the same commit:
+# `python -m dclabaccount.exceptions hash my_work_across_clients` prints the hash to record.
+# A read-only exception covers the tables that have a cross-tenant policy (filing_deadline, import_batch). Ledger lines
+# of a dedicated tenant are in another database and have no such path: a new exception would have to be reviewed for it.
+exceptions:
+  - id: my_work_across_clients
+    description: >-
+      An accountant's open filing deadlines and recent import problems across every client they work for, in one
+      result set. Read-only. Rows carry the tenant they belong to.
+    reviewer: joana.tech-lead
+    reviewed_on: 2026-10-19
+    sql_sha256: 5f542b41f6e457c791d4228dcc47fbbf15b684a316f9d77a082953113b2491eb
+    sql: |
+      SELECT app.tenant_slug(d.tenant_id) AS tenant, d.kind AS what, d.due_date AS on_date, d.status, 'deadline' AS item
+      FROM filing_deadline d
+      WHERE d.status = 'open'
+      UNION ALL
+      SELECT app.tenant_slug(b.tenant_id), 'import ' || b.period, b.created_at::date, b.status, 'import'
+      FROM import_batch b
+      WHERE b.status = 'quarantined'
+      ORDER BY on_date, tenant

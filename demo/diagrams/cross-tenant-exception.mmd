@@ -1,0 +1,12 @@
+%%{init: {"flowchart": {"nodeSpacing": 22, "rankSpacing": 38}}}%%
+flowchart LR
+    Q["Code asks to read across tenants<br/>exceptions.run(user, id)"] --> L{"id listed in<br/>exceptions.yaml?"}
+    L -->|no| X1["Refused"]
+    L -->|yes| H{"statement hash equals<br/>the reviewed hash?"}
+    H -->|"changed since review"| X2["Refused: needs a new review"]
+    H -->|yes| S["app.enter_scope(user, id)<br/>in the database"]
+    S --> DB{"id on the database's<br/>own reviewed list?"}
+    DB -->|no| X3["Refused by the database"]
+    DB -->|yes| G["Scope granted for this transaction only:<br/>the user's tenants, use recorded"]
+    G --> RUN["Statement runs; the read-only policy<br/>opens for the tenants in scope"]
+    RUN --> E["COMMIT: the scope ends"]

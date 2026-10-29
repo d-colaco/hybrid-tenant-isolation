@@ -1,0 +1,14 @@
+{
+ "date": "2026-10-19",
+ "host": "Linux-6.17.0-41-generic-x86_64-with-glibc2.42",
+ "transactions": 50000,
+ "lines": 100000,
+ "file_mb": 51.1,
+ "problems": 0,
+ "status": "accepted",
+ "generate_seconds": 2.8,
+ "parse_and_validate_seconds": 2.1,
+ "import_total_seconds": 5.5,
+ "lines_per_second_total": 18295,
+ "command": "python scripts/measure_import.py"
+}

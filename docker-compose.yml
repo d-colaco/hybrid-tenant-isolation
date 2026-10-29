@@ -1,0 +1,38 @@
+# Two PostgreSQL servers: the shared one every tenant starts in, and a dedicated one for a heavy tenant's ledger lines.
+# Same image, same limits, so a measured difference is the placement and not the hardware.
+name: dclabaccount
+
+x-postgres: &postgres
+  image: postgres:16
+  environment:
+    POSTGRES_USER: lab_admin
+    POSTGRES_PASSWORD: ${LAB_ADMIN_PASSWORD:?run make setup}
+    POSTGRES_DB: lab
+    LAB_APP_PASSWORD: ${LAB_APP_PASSWORD:?run make setup}
+  command: ["postgres", "-c", "shared_buffers=256MB", "-c", "max_connections=200", "-c", "log_min_duration_statement=-1"]
+  cpus: 2
+  mem_limit: 2g
+  shm_size: 1g          # parallel query workers use /dev/shm; Docker's 64 MB default fails a heavy job ("No space left on device")
+  healthcheck:
+    test: ["CMD-SHELL", "pg_isready -U lab_admin -d lab"]
+    interval: 3s
+    timeout: 3s
+    retries: 30
+
+services:
+  pg-shared:
+    <<: *postgres
+    ports: ["127.0.0.1:${SHARED_PORT:-32141}:5432"]
+    volumes:
+      - shared-data:/var/lib/postgresql/data
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+  pg-heavy:
+    <<: *postgres
+    ports: ["127.0.0.1:${HEAVY_PORT:-32142}:5432"]
+    volumes:
+      - heavy-data:/var/lib/postgresql/data
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+
+volumes:
+  shared-data:
+  heavy-data:

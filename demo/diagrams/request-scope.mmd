@@ -1,0 +1,16 @@
+sequenceDiagram
+    autonumber
+    participant A as Request A (tenant Alfa)
+    participant P as Pooled connection
+    participant D as PostgreSQL (RLS)
+    participant B as Request B (forgot the tenant)
+    A->>P: borrow
+    A->>D: resolve_tenant(alfa, user): member?
+    A->>D: BEGIN, set tenant alfa (transaction-local)
+    A->>D: SELECT * FROM ledger_line
+    D-->>A: Alfa's rows only (policy: tenant_id = setting)
+    A->>D: COMMIT: the setting is gone
+    A->>P: return
+    B->>P: borrow the same connection
+    B->>D: SELECT * FROM ledger_line (no tenant set)
+    D-->>B: no rows (setting is empty, the policy is false)

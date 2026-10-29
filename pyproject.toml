@@ -1,0 +1,37 @@
+[project]
+name = "dclabaccount"
+version = "0.1.0"
+description = "A multi-tenant accounting back office on synthetic data: row-level security, a reviewed cross-tenant exception, a dedicated database for a heavy tenant, SAF-T import."
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn>=0.30",
+    "psycopg[binary,pool]>=3.2",
+    "alembic>=1.13",
+    "defusedxml>=0.7",
+    "pyyaml>=6",
+    "python-multipart>=0.0.9",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "httpx", "ruff"]
+evidence = ["playwright"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[tool.ruff]
+line-length = 120
+src = ["src", "tests", "scripts"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B"]
+ignore = ["E501"]

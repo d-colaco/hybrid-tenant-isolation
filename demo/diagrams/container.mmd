@@ -1,0 +1,16 @@
+%%{init: {"flowchart": {"nodeSpacing": 25, "rankSpacing": 45}}}%%
+flowchart LR
+    C["Client<br/>user + tenant name"] --> A["API<br/>FastAPI"]
+    A --> R["Router<br/>resolves tenant, picks database,<br/>sets the tenant per transaction"]
+    subgraph shared["PostgreSQL: shared"]
+        CT["Control tables<br/>tenants, memberships,<br/>reviewed exceptions<br/>(no privilege for the app role)"]
+        TD["Tenant tables with<br/>row-level security<br/>accounts, parties, deadlines,<br/>import batches, ledger lines"]
+    end
+    subgraph heavy["PostgreSQL: dedicated"]
+        HL["Ledger lines of<br/>heavy tenants<br/>same policies"]
+    end
+    R -->|"SECURITY DEFINER<br/>resolve_tenant, enter_scope"| CT
+    R -->|"lab_app role<br/>FORCE RLS"| TD
+    R -->|"tenant routing:<br/>database_key = heavy"| HL
+    O["Operator<br/>lab_admin: seed, route,<br/>move, purge"] -. "bypasses RLS<br/>never used by the API" .-> shared
+    O -.-> heavy
